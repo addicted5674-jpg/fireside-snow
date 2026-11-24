@@ -1,0 +1,1 @@
+{ "name": "fireside-snow", "version": "0.1.0", "description": "A cozy living room with a crackling fireplace; snow piles up outside the window as the context window fills", "types": "./types/index.d.ts", "license": "MIT" }

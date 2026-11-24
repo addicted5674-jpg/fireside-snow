@@ -1,0 +1,5 @@
+{
+  "name": "fireside-snow",
+  "owner": { "name": "addicted5674-jpg" },
+  "plugins": [{ "name": "fireside-snow", "source": "./" }]
+}
