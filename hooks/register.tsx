@@ -58,6 +58,80 @@ const FLAKES = (() => {
   }))
 })()
 
+// The Christmas tree: lower left, standing in front of the window's corner.
+const TX = 170
+const TIERS = [
+  { top: 530, bottom: 700, half: 130 },
+  { top: 455, bottom: 600, half: 100 },
+  { top: 400, bottom: 505, half: 70 },
+]
+const LIGHT_COLORS = ['#ffcf6b', '#ff7a6b', '#8fd3ff', '#b6f28a']
+const BAUBLE_COLORS = ['#c8322f', '#e9a54f', '#d9d2c4']
+
+function insideTier(r: () => number, t: (typeof TIERS)[number]) {
+  const y = t.top + 22 + r() * (t.bottom - t.top - 30)
+  const w = (t.half * (y - t.top)) / (t.bottom - t.top)
+  return { x: TX + (r() * 2 - 1) * w * 0.8, y }
+}
+
+const TREE = (() => {
+  let tiers = ''
+  TIERS.forEach((t, i) => {
+    const step = (t.half * 2) / 4
+    let d = `M${TX - t.half} ${t.bottom}L${TX} ${t.top}L${TX + t.half} ${t.bottom}`
+    for (let k = 0; k < 4; k++) {
+      const x = TX + t.half - k * step
+      d += `Q${x - step / 2} ${t.bottom + 12} ${x - step} ${t.bottom}`
+    }
+    tiers += `<path d="${d}Z" fill="${i % 2 === 0 ? '#1f4a32' : '#25573a'}"/>`
+  })
+
+  const r = rng(21)
+  let lights = ''
+  TIERS.forEach((t, ti) => {
+    for (let k = 0; k < [11, 9, 6][ti]; k++) {
+      const { x, y } = insideTier(r, t)
+      const c = LIGHT_COLORS[(k + ti) % LIGHT_COLORS.length]
+      const delay = -(r() * 2).toFixed(1)
+      lights += `<g class="tw" style="animation-delay:${delay}s"><circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="7" fill="${c}" opacity="0.3"/><circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="3" fill="${c}"/></g>`
+    }
+  })
+
+  const b = rng(33)
+  let baubles = ''
+  TIERS.forEach((t, ti) => {
+    for (let k = 0; k < [5, 4, 2][ti]; k++) {
+      const { x, y } = insideTier(b, t)
+      const c = BAUBLE_COLORS[(k + ti) % BAUBLE_COLORS.length]
+      baubles += `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="6.5" fill="${c}"/><circle cx="${(x - 2).toFixed(0)}" cy="${(y - 2).toFixed(0)}" r="1.8" fill="#fff" opacity="0.55"/>`
+    }
+  })
+
+  let star = ''
+  for (let i = 0; i < 10; i++) {
+    const a = ((-90 + i * 36) * Math.PI) / 180
+    const rad = i % 2 === 0 ? 18 : 7.5
+    star += `${i === 0 ? 'M' : 'L'}${(TX + rad * Math.cos(a)).toFixed(1)} ${(392 + rad * Math.sin(a)).toFixed(1)}`
+  }
+
+  return `<circle class="lamp" cx="${TX}" cy="580" r="250" fill="url(#treeglow)"/>
+<path d="M${TX - 40} 760L${TX - 32} 728H${TX + 32}L${TX + 40} 760Z" fill="#7a3328"/>
+<rect x="${TX - 13}" y="694" width="26" height="36" fill="#4a2f20"/>
+${tiers}
+${baubles}
+${lights}
+<circle class="glow" cx="${TX}" cy="392" r="30" fill="url(#lampglow)"/>
+<path class="glow" d="${star}Z" fill="#ffd76a"/>
+<!-- presents -->
+<rect x="40" y="722" width="52" height="38" rx="2" fill="#3f6b3a"/>
+<path d="M66 722V760M40 739H92" stroke="#e9a54f" stroke-width="6"/>
+<rect x="232" y="712" width="62" height="48" rx="2" fill="#8f2f2a"/>
+<path d="M263 712V760M232 734H294" stroke="#f0c46a" stroke-width="7"/>
+<path d="M263 712C250 698 244 712 263 712C282 712 276 698 263 712" fill="none" stroke="#f0c46a" stroke-width="4"/>
+<rect x="302" y="732" width="46" height="28" rx="2" fill="#2f5d7a"/>
+<path d="M325 732V760" stroke="#e8d8b0" stroke-width="5"/>`
+})()
+
 function snowFor(percent: number) {
   const p = Math.max(0, Math.min(100, percent)) / 100
   return {
@@ -93,6 +167,7 @@ function sceneSvg(percent: number) {
 <radialGradient id="fireglow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff9a3c" stop-opacity="0.55"/><stop offset="1" stop-color="#ff9a3c" stop-opacity="0"/></radialGradient>
 <radialGradient id="lampglow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd59a" stop-opacity="0.35"/><stop offset="1" stop-color="#ffd59a" stop-opacity="0"/></radialGradient>
 <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff7a1f"/><stop offset="0.6" stop-color="#ffb347"/><stop offset="1" stop-color="#ffe08a"/></linearGradient>
+<radialGradient id="treeglow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffcf6b" stop-opacity="0.22"/><stop offset="1" stop-color="#ffcf6b" stop-opacity="0"/></radialGradient>
 <clipPath id="pane"><rect x="${WX}" y="${WY}" width="${WW}" height="${WH}"/></clipPath>
 </defs>
 <style>
@@ -104,6 +179,8 @@ function sceneSvg(percent: number) {
 .fl3{animation:sw 2.8s ease-in-out -0.5s infinite alternate}
 @keyframes sw{from{transform:scale(1,1) skewX(-4deg)}to{transform:scale(0.92,1.08) skewX(4deg)}}
 .lamp{animation:gl 7s ease-in-out infinite alternate}
+.tw{animation:tw 1.8s ease-in-out infinite alternate}
+@keyframes tw{to{opacity:0.35}}
 ${styles}
 </style>
 <rect width="1600" height="900" fill="url(#wall)"/>
@@ -121,6 +198,8 @@ ${snow}
 </g>
 <path d="M${WX + WW / 2} ${WY}V${WY + WH}M${WX} ${WY + WH / 2}H${WX + WW}" stroke="#4b3226" stroke-width="12"/>
 <rect x="${WX - 34}" y="${WY + WH + 14}" width="${WW + 68}" height="16" rx="3" fill="#5a3c2c"/>
+<!-- Christmas tree, lower left -->
+${TREE}
 <!-- lamp glow, upper right -->
 <circle class="lamp" cx="1420" cy="250" r="260" fill="url(#lampglow)"/>
 <path d="M1400 470V300" stroke="#3a281f" stroke-width="8"/>
@@ -180,7 +259,7 @@ export const register: Register = on => {
     return (
       <Svg
         source={sceneSvg(pct)}
-        alt={`A cozy living room with a fire in the hearth; snow is piled ${pct}% up the window`}
+        alt={`A cozy living room with a fire in the hearth and a lit Christmas tree; snow is piled ${pct}% up the window`}
         isInteractive
       />
     )
